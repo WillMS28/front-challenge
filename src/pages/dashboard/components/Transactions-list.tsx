@@ -15,7 +15,6 @@ export const TransactionsList = ({
   const sortedTransactions = [...walletDetails.wallet.transactions].sort(
     (a, b) => parseInt(b.date) - parseInt(a.date)
   );
-
   return (
     <div className="flex flex-col items-center w-1/2 max-md:w-full">
       <h3 className="text-lg font-semibold truncate text-white">
@@ -31,9 +30,9 @@ export const TransactionsList = ({
             return (
               <div
                 key={transaction.id}
-                className="flex justify-between items-center w-full border my-2 px-4 py-2 rounded-lg bg-secondary"
+                className="flex justify-between items-center max-sm:flex-col w-full border my-2 px-4 py-2 rounded-lg bg-secondary"
               >
-                <div className="">
+                <div className="flex flex-col max-sm:items-center">
                   {isSended ? (
                     <span className="text-xs text-zinc-300">Transfer sent</span>
                   ) : (
@@ -43,14 +42,16 @@ export const TransactionsList = ({
                   )}
                   <div className="flex flex-col items-start">
                     <p className="text-sm text-white font-semibold truncate ">
-                      {transaction.sender.name}
+                      {isSended
+                        ? transaction.receiver.name
+                        : transaction.sender.name}
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-start">
-                  <div className="flex items-center justify-center gap-1">
+                <div className="flex flex-col items-baseline max-sm:flex-row max-sm:gap-2">
+                  <div className="flex items-center justify-center gap-1 ">
                     <span className="text-sm text-white font-semibold truncate ">
-                      {transaction.amount.toLocaleString("pt-br", {
+                      {parseFloat(transaction.amount).toLocaleString("pt-br", {
                         style: "currency",
                         currency: "BRL",
                       })}

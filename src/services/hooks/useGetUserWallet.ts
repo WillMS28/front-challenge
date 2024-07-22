@@ -28,7 +28,7 @@ export interface Transaction {
   id: string;
   fromWallet: string;
   toWallet: string;
-  amount: number;
+  amount: string;
   date: string;
   sender: {
     id: string;
@@ -42,7 +42,7 @@ export interface Transaction {
 
 export interface Wallet {
   id: string;
-  balance: number;
+  balance: string;
   transactions: Transaction[];
 }
 

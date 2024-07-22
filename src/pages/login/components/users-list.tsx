@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserCardLogin } from "../login/user-card-login";
+import { UserCardLogin } from "./user-card-login";
 import { useGetUsers } from "@/services/hooks/useGetUsers";
 import { Loader2 } from "lucide-react";
 

@@ -1,7 +1,7 @@
 import { gql, useMutation } from "@apollo/client";
 
 const SEND_FUNDS = gql`
-  mutation SendFunds($fromWalletId: ID!, $toWalletId: ID!, $amount: Float!) {
+  mutation SendFunds($fromWalletId: ID!, $toWalletId: ID!, $amount: String!) {
     sendFunds(
       fromWalletId: $fromWalletId
       toWalletId: $toWalletId
@@ -29,7 +29,7 @@ interface SendFundsData {
     id: string;
     fromWallet: string;
     toWallet: string;
-    amount: number;
+    amount: string;
     date: string;
     sender: {
       id: string;
@@ -45,7 +45,7 @@ interface SendFundsData {
 interface SendFundsVars {
   fromWalletId: string;
   toWalletId: string;
-  amount: number;
+  amount: string;
 }
 
 export const useSendFunds = () => {

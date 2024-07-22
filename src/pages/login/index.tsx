@@ -11,7 +11,7 @@ import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useCreateUser } from "@/services/hooks/useCreateUser";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { UserList } from "./users-list";
+import { UserList } from "./components/users-list";
 
 const githubUrlPattern = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9_-]+$/;
 
