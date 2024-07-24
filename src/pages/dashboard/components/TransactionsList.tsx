@@ -1,28 +1,36 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User } from "@/services/hooks/useGetUser";
-import { WalletData } from "@/services/hooks/useGetUserWallet";
 import { ArrowBigDownDash, ArrowBigUpDash } from "lucide-react";
+import { useLazyLoadQuery } from "react-relay";
+import { walletQueryGraphQL } from "@/graphql/wallet";
+import { User } from "@/types/user";
+import { walletQuery } from "@/graphql/__generated__/walletQuery.graphql";
 
 interface TransactionsProps {
-  walletDetails: WalletData;
   user: User;
 }
 
-export const TransactionsList = ({
-  walletDetails,
-  user,
-}: TransactionsProps) => {
-  const sortedTransactions = [...walletDetails.wallet.transactions].sort(
-    (a, b) => parseInt(b.date) - parseInt(a.date)
+export const TransactionsList = ({ user }: TransactionsProps) => {
+  const response = useLazyLoadQuery<walletQuery>(
+    walletQueryGraphQL,
+    { id: user.wallet.id },
+    { fetchPolicy: "store-and-network" }
   );
+
+  const sortedTransactions =
+    response.wallet && Array.isArray(response.wallet.transactions)
+      ? [...response.wallet.transactions].sort(
+          (a, b) => parseInt(b.date) - parseInt(a.date)
+        )
+      : [];
+
   return (
     <div className="flex flex-col items-center w-1/2 max-md:w-full">
       <h3 className="text-lg font-semibold truncate text-white">
         My transactions
       </h3>
+
       <ScrollArea className="w-full p-2 flex flex-col max-h-[440px] overflow-y-auto">
-        {Array.isArray(walletDetails.wallet.transactions) &&
-        walletDetails.wallet.transactions.length > 0 ? (
+        {sortedTransactions.length > 0 ? (
           sortedTransactions.map((transaction) => {
             const isSended = transaction.fromWallet == user.wallet.id;
             const date = new Date(parseFloat(transaction.date));

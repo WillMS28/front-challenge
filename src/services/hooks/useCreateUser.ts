@@ -1,21 +1,9 @@
-import { gql, useMutation } from "@apollo/client";
-import { Wallet } from "./useGetUserWallet";
+import { useMutation } from "react-relay";
+import { Wallet } from "@/types/wallet";
+import { createUserMutation } from "@/graphql/__generated__/createUserMutation.graphql";
+import { createUserMutationGraphQL } from "@/graphql/createUser";
 
-const CREATE_USER = gql`
-  mutation CreateUser($name: String!, $email: String!) {
-    createUser(name: $name, email: $email) {
-      id
-      name
-      email
-      wallet {
-        id
-        balance
-      }
-    }
-  }
-`;
-
-interface CreateUserData {
+export interface CreateUserData {
   createUser: {
     id: string;
     name: string;
@@ -24,11 +12,6 @@ interface CreateUserData {
   };
 }
 
-interface VariablesCreateUser {
-  name: string;
-  email: string;
-}
-
 export const useCreateUser = () => {
-  return useMutation<CreateUserData, VariablesCreateUser>(CREATE_USER);
+  return useMutation<createUserMutation>(createUserMutationGraphQL);
 };

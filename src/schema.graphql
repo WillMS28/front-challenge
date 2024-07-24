@@ -1,0 +1,34 @@
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  wallet: Wallet
+}
+
+type Wallet {
+  id: ID!
+  balance: String!
+  transactions: [Transaction]
+}
+
+type Transaction {
+  id: ID!
+  fromWallet: ID!
+  toWallet: ID!
+  amount: String!
+  date: String!
+  sender: User!
+  receiver: User!
+}
+
+type Query {
+  user(id: ID!): User
+  users: [User]
+  wallet(id: ID!): Wallet
+}
+
+type Mutation {
+  createUser(name: String!, email: String!): User
+  addFundsToWallet(walletId: ID!, amount: String!): Wallet
+  sendFunds(fromWalletId: ID!, toWalletId: ID!, amount: String!): Transaction
+}

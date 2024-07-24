@@ -7,8 +7,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/userAvatar";
-import { User } from "@/services/hooks/useGetUser";
+import { sendFundsMutation$data } from "@/graphql/__generated__/sendFundsMutation.graphql";
 import { useSendFunds } from "@/services/hooks/useSendFunds";
+import { User } from "@/types/user";
 import { useState } from "react";
 
 interface SendFundsType {
@@ -29,18 +30,26 @@ export const CardUserToTransfer = ({
   const [openPopover, setOpenPopover] = useState(false);
   const [amount, setAmount] = useState("0");
 
-  const [sendFunds, { loading }] = useSendFunds();
+  const [, setData] = useState<sendFundsMutation$data>();
+  const [loading, setLoading] = useState(false);
+
+  const [commit] = useSendFunds();
 
   const handleSendFunds = ({ userToSend }: SendFundsType) => {
     setOpenPopover(false);
-    sendFunds({
+    setLoading(true);
+    commit({
       variables: {
         fromWalletId: currentUser.wallet.id,
         toWalletId: userToSend.wallet.id,
         amount,
       },
+      onCompleted(response) {
+        setData(response);
+        refetch();
+        setLoading(false);
+      },
     });
-    refetch();
   };
 
   return (
@@ -52,7 +61,7 @@ export const CardUserToTransfer = ({
             variant="outline"
           >
             <div className="flex justify-between items-center w-full">
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-start w-0 flex-1">
                 <p className="text-sm text-zinc-600 truncate ">
                   {userToTransfer.name}
                 </p>
@@ -94,7 +103,7 @@ export const CardUserToTransfer = ({
                   className="bg-secondary hover:bg-secondary-hover"
                   disabled={
                     parseFloat(amount) <= 0 ||
-                    parseFloat(amount) > currentUser.wallet.balance ||
+                    parseFloat(amount) > parseFloat(currentUser.wallet.balance) ||
                     amount.trim() === "" ||
                     loading
                   }

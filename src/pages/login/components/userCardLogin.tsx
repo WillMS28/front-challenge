@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/userAvatar";
-import { User } from "@/services/hooks/useGetUser";
+import { User } from "@/types/user";
 import { useNavigate } from "react-router-dom";
 
 interface UserCardLoginProps {
@@ -12,8 +12,8 @@ export const UserCardLogin = ({ user }: UserCardLoginProps) => {
 
   const handleSelectUser = (): void => {
     localStorage.setItem("user", JSON.stringify(user));
-    // navegar para dashboard
-    navigate("/dashboard", {state: user});
+  
+    navigate("/dashboard", { state: user });
   };
 
   return (
@@ -23,11 +23,10 @@ export const UserCardLogin = ({ user }: UserCardLoginProps) => {
       onClick={handleSelectUser}
     >
       <div className="flex justify-between items-center w-full">
-        <div className="flex flex-col items-start">
-          <p className="text-sm text-zinc-600 truncate ">{user.name}</p>
-          <p className="text-sm text-zinc-500">{user.email}</p>
+        <div className="flex flex-col items-start w-0 flex-1">
+          <p className="text-sm text-zinc-600 truncate">{user.name}</p>
+          <p className="text-sm text-zinc-500 truncate">{user.email}</p>
         </div>
-
         <UserAvatar user={user} />
       </div>
     </Button>

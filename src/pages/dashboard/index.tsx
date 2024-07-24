@@ -1,131 +1,76 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { fetchQuery } from "relay-runtime";
+import { useRelayEnvironment } from "react-relay";
 
 import { Separator } from "@/components/ui/separator";
-import { User } from "@/services/hooks/useGetUser";
-import { UserList } from "./components/users-list";
-import { GET_USER, UserData, VariablesUser } from "@/services/hooks/useGetUser";
-import { useQuery } from "@apollo/client";
-import {
-  GET_WALLET,
-  useGetUserWallet,
-  WalletData,
-} from "@/services/hooks/useGetUserWallet";
-import { TransactionsList } from "./components/Transactions-list";
+import { UserListToTransfer } from "./components/usersListToTransfer";
+
+import { TransactionsList } from "./components/TransactionsList";
 import { Wallet } from "./components/wallet";
+import RelayModernEnvironment from "relay-runtime/lib/store/RelayModernEnvironment";
+import { User } from "@/types/user";
+
+import { userQueryGraphQL } from "@/graphql/user";
+import { walletQueryGraphQL } from "@/graphql/wallet";
+import { userQuery } from "@/graphql/__generated__/userQuery.graphql";
+import { walletQuery } from "@/graphql/__generated__/walletQuery.graphql";
 
 export const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [walletDetailsT, setWalletDetailsTransfer] = useState<
-    WalletData | undefined
-  >();
+
+  const environment = useRelayEnvironment();
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const {
-    data: getWalletData,
-    loading: getWalletLoading,
-    client: clientWallet,
-  } = useGetUserWallet(
-    location.state.wallet.id ? location.state.wallet.id : user?.wallet.id
-  );
-
-  const {
-    loading: getUserLoading,
-    data: getUserData,
-    called: getUserCalled,
-    client,
-  } = useQuery<UserData, VariablesUser>(GET_USER, {
-    variables: { id: location.state.id ? location.state.id : user?.id },
-  });
-
   const closeAndBackToLogin = () => {
     localStorage.removeItem("user");
     setUser(null);
-    setWalletDetailsTransfer(undefined);
 
     navigate("/");
   };
 
-  const refetchQueries = async () => {
-    await client.refetchQueries({
-      include: [GET_USER],
-    });
-    const newTransaction = await clientWallet.refetchQueries({
-      include: [GET_WALLET],
-    });
-    if (newTransaction[0]?.data) {
-      setWalletDetailsTransfer(() => newTransaction[0].data);
+  const getUserRelay = async (
+    environment: RelayModernEnvironment,
+    id: string
+  ) => {
+    try {
+      await fetchQuery<userQuery>(environment, userQueryGraphQL, {
+        id: id,
+      })
+        .toPromise()
+        .then((res) => {
+          setUser(res.user);
+        });
+    } catch (error) {
+      console.error("Failed to refresh transactions:", error);
     }
   };
 
+  getUserRelay(environment, user?.id ? user?.id : "");
+
+  const refetchQueries = () => {
+    handleRefreshClick();
+  };
+
   useEffect(() => {
-    if (getUserData && !getUserLoading) {
-      setUser(getUserData.user);
+    if (location.state.id) {
+      setUser(location.state);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getUserCalled]);
+  }, [location.state]);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-
-      if (getUserData?.user) {
-        localStorage.setItem("user", JSON.stringify(getUserData?.user));
-        setUser(getUserData?.user);
+  const handleRefreshClick = async () => {
+    if (user) {
+      try {
+        await fetchQuery<walletQuery>(environment, walletQueryGraphQL, {
+          id: user.wallet.id,
+        }).toPromise();
+      } catch (error) {
+        console.error("Failed to refresh transactions:", error);
       }
-    } else if (!storedUser || !JSON.parse(storedUser).id) {
-      navigate("/");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (getUserData && !getUserLoading) {
-      setUser(getUserData.user);
-    }
-  }, [getUserData, getUserLoading]);
-
-  /*  useEffect(() => {
-    if (getWalletData) {
-      setWalletDetails((currentWalletData) => {
-        if (currentWalletData) {
-          if (
-            currentWalletData?.wallet.transactions.length >=
-            getWalletData?.wallet.transactions.length
-          )
-            return currentWalletData;
-        } else {
-          return getWalletData;
-        }
-      });
-    }
-  }, [getWalletData, walletDetails?.wallet.transactions.length, getWalletLoading, calledWallet]);*/
-
-  const walletDetails = useMemo((): WalletData | null | undefined => {
-    if (getWalletData) {
-      console.log("walletDetails");
-      if (walletDetailsT) {
-        if (
-          walletDetailsT.wallet.transactions.length >
-          getWalletData.wallet.transactions.length
-        ) {
-          return walletDetailsT;
-        } else {
-          return getWalletData;
-        }
-      }
-      return getWalletData;
-    } else if (walletDetailsT && !getWalletData) {
-      return walletDetailsT;
-    } else {
-      return null;
-    }
-  }, [getWalletData, walletDetailsT, getWalletLoading]);
+  };
 
   return (
     <div className="flex flex-col relative w-[90%] h-[90%] max-md:min-h-[80%] max-md:h-auto max-w-[1280px] space-y-6 shadow-lg bg-primary bg-opacity-80 rounded-lg backdrop-blur-sm p-6">
@@ -138,11 +83,7 @@ export const DashboardPage = () => {
       <Separator />
 
       <div className="flex justify-between h-full max-md:flex-col gap-4">
-        {user && walletDetails ? (
-          <TransactionsList user={user} walletDetails={walletDetails} />
-        ) : (
-          <></>
-        )}
+        {user ? <TransactionsList user={user} /> : <></>}
         <Separator orientation="vertical" />
 
         <div className=" flex flex-col items-center w-1/2 max-md:w-full">
@@ -150,7 +91,9 @@ export const DashboardPage = () => {
             Transfer to:
           </h3>
           {/* lista restante dos usuários */}
-          {user && <UserList myUser={user} refetch={refetchQueries} />}
+          {user && (
+            <UserListToTransfer myUser={user} refetch={refetchQueries} />
+          )}
         </div>
       </div>
     </div>

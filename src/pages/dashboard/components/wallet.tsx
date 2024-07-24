@@ -13,9 +13,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { addFundsMutation$data } from "@/graphql/__generated__/addFundsMutation.graphql";
 import { WalletBalance } from "@/pages/dashboard/components/walletBalance";
 import { useAddFunds } from "@/services/hooks/useAddFunds";
-import { User } from "@/services/hooks/useGetUser";
+import { User } from "@/types/user";
 import { LogOut } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -35,7 +36,10 @@ export const Wallet = ({
   const [openPopover, setOpenPopover] = useState(false);
   const location = useLocation();
 
-  const [addFunds, { loading: addFoundsLoading }] = useAddFunds();
+  const [, setData] = useState<addFundsMutation$data>();
+  const [loading, setLoading] = useState(false);
+
+  const [commit] = useAddFunds();
 
   function handleAddFunds(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -44,10 +48,14 @@ export const Wallet = ({
       amount: { value: string };
     };
 
-    addFunds({
+    commit({
       variables: {
         amount: target.amount.value.toString(),
         walletId: user?.wallet.id ? user?.wallet.id : location.state.wallet.id,
+      },
+      onCompleted(response) {
+        setData(response);
+        setLoading(false);
       },
     });
 
@@ -128,7 +136,7 @@ export const Wallet = ({
                             disabled={
                               parseFloat(amount) <= 0 ||
                               amount.trim() === "" ||
-                              addFoundsLoading
+                              loading
                             }
                             className="bg-secondary hover:bg-secondary-hover"
                           >

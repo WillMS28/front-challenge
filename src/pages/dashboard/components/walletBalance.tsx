@@ -1,36 +1,47 @@
-import { GET_USER, UserData, VariablesUser } from "@/services/hooks/useGetUser";
-import { User } from "@/services/hooks/useGetUsers";
-import { useQuery } from "@apollo/client";
-import { useEffect, useState } from "react";
+import { userQueryGraphQL } from "@/graphql/user";
+import { RelayEnvironment } from "@/RelayEnvironment";
+import { User, UserData } from "@/types/user";
+import { Loader2 } from "lucide-react";
+import { QueryRenderer } from "react-relay";
 
 interface WalletBalanceProps {
   user: User;
 }
 
+
 export const WalletBalance = ({ user }: WalletBalanceProps) => {
-  const [balance, setBalance] = useState(0);
-
-  const { loading: getUserLoading, data: getUserData } = useQuery<
-    UserData,
-    VariablesUser
-  >(GET_USER, {
-    variables: { id: user?.id ? user?.id : "" },
-  });
-  useEffect(() => {
-    if (getUserData) {
-      setBalance(getUserData.user.wallet.balance);
-    }
-  }, [getUserData]);
-
   return (
-    <div className="flex flex-col">
-      <span className="text-zinc-600 text-sm">Balance</span>
-      <span className="text-zinc-600 text-base font-semibold">
-        {balance.toLocaleString("pt-br", {
-          style: "currency",
-          currency: "BRL",
-        })}
-      </span>
-    </div>
+    <QueryRenderer
+      variables={{ id: user.id }}
+      environment={RelayEnvironment}
+      query={userQueryGraphQL}
+      render={({ error, props }) => {
+        if (error) {
+          return <div>Error! {error.message}</div>;
+        } else if (!props) {
+          return (
+            <div className="flex justify-center items-center">
+              <Loader2 className="mr-2 h-8 w-8 animate-spin text-secondary" />
+            </div>
+          );
+        } else {
+          const usersData = props as UserData;
+
+          if (usersData.user.wallet.balance) {
+            return (
+              <div className="flex flex-col">
+                <span className="text-zinc-600 text-sm">Balance</span>
+                <span className="text-zinc-600 text-base font-semibold">
+                  {parseFloat(usersData.user.wallet.balance).toLocaleString("pt-br", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </span>
+              </div>
+            );
+          }
+        }
+      }}
+    />
   );
 };
